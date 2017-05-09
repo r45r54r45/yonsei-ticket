@@ -4,7 +4,6 @@
   <meta name="viewport" content="width=device-width, user-scalable=no">
   <link rel="shortcut icon" href="">
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">
-  <link href="/node_modules/bootstrap/dist/css/bootstrap-grid.min.css" rel="stylesheet">
   <style>
     body{
       padding:0;
@@ -14,9 +13,23 @@
       font-family: Roboto, sans-serif;
     }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/3.7.8/firebase.js"></script>
+  <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyB7rs8Mq66q8V_GobyDZr_v2uSM9aUgm-M",
+      authDomain: "projectg2016.firebaseapp.com",
+      databaseURL: "https://projectg2016.firebaseio.com",
+      projectId: "firebase-projectg2016",
+      storageBucket: "firebase-projectg2016.appspot.com",
+      messagingSenderId: "924992374729"
+    };
+    firebase.initializeApp(config);
+  </script>
+
 </head>
 <body>
 <div id='root'></div>
-<script src="/static/bundle.js"></script>
+<script src="/bundle.js"></script>
 </body>
 </html>

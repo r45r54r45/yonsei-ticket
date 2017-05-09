@@ -2,13 +2,19 @@
 import React, {Component} from 'react';
 import {Card, CardTitle, CardText, CardHeader} from 'material-ui/Card'
 import image from '../jsa-128.jpg';
-
+import {postWithAuth, post, getWithAuth, get}  from '../utils/request';
+import CircularProgress from 'material-ui/CircularProgress'
 const styles = {
   container: {
 
   },
   cards:{
     marginBottom: '10px'
+  },
+  center: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 };
 
@@ -22,9 +28,18 @@ class Main extends Component {
 
     this.state = {
       open: false,
+      noticeList: []
     };
   }
 
+  componentDidMount(){
+    get('/notice')
+      .then(result=>{
+        this.setState({
+          noticeList: result
+        })
+      })
+  }
   handleRequestClose() {
     this.setState({
       open: false,
@@ -32,6 +47,7 @@ class Main extends Component {
   }
 
   handleTouchTap() {
+
     this.setState({
       open: true,
     });
@@ -40,39 +56,29 @@ class Main extends Component {
   render() {
     return (
       <div style={styles.container}>
-        <Card style={styles.cards}>
-          <CardHeader
-            title="Woohyun Kim"
-            subtitle="UIC Admin"
-            avatar={image}
-            actAsExpander={true}
-            showExpandableButton={true}
-          />
-          <CardTitle title="Website is on construction" subtitle="2017-03-24 14:34" />
-          <CardText expandable={true}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            Donec mattis pretium massa. Aliquam erat volutpat. Nulla facilisi.
-            Donec vulputate interdum sollicitudin. Nunc lacinia auctor quam sed pellentesque.
-            Aliquam dui mauris, mattis quis lacus id, pellentesque lobortis odio.
-          </CardText>
-        </Card>
-
-        <Card style={styles.cards}>
-          <CardHeader
-            title="Woohyun Kim"
-            subtitle="UIC Admin"
-            avatar={image}
-            actAsExpander={true}
-            showExpandableButton={true}
-          />
-          <CardTitle title="Website is on construction" subtitle="2017-03-24 14:34" />
-          <CardText expandable={true}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            Donec mattis pretium massa. Aliquam erat volutpat. Nulla facilisi.
-            Donec vulputate interdum sollicitudin. Nunc lacinia auctor quam sed pellentesque.
-            Aliquam dui mauris, mattis quis lacus id, pellentesque lobortis odio.
-          </CardText>
-        </Card>
+        {this.state.noticeList.length ===0 && (
+          <div style={styles.center}>
+            <CircularProgress/>
+          </div>
+        )}
+        {this.state.noticeList.map((notice, index)=>{
+          return (
+            <Card style={styles.cards} key={index}>
+              <CardHeader
+                title={notice.USER_NAME}
+                subtitle="UIC Admin"
+                avatar={image}
+                actAsExpander={true}
+                showExpandableButton={true}
+              />
+              <CardTitle title={notice.TITLE} subtitle={new Date(notice.CREATED_AT).toLocaleString()} />
+              <CardText expandable={true}>
+                <div dangerouslySetInnerHTML={{__html: notice.CONTENT}}>
+                </div>
+              </CardText>
+            </Card>
+          )
+        })}
       </div>
     );
   }

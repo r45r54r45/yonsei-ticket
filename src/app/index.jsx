@@ -6,6 +6,7 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import {green100, green500, green700, blue500, blue700, blue100} from 'material-ui/styles/colors';
 
 import Routing from './Router.jsx'
+import '../../node_modules/bootstrap/dist/css/bootstrap-grid.min.css';
 
 const muiTheme = getMuiTheme({
   palette: {

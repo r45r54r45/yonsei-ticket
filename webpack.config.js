@@ -54,10 +54,13 @@ module.exports = {
     'webpack/hot/dev-server',
     './src/app/index.jsx'
   ],
+  template:{
+    filename: __dirname + "/public/index.html"
+  },
   output: {
-    path: __dirname,
+    path: __dirname+"/dev",
     filename: 'bundle.js',
-    publicPath: '/static/'
+    publicPath: '/'
   },
   resolve: {
     extensions: ['', '.js']

@@ -3,7 +3,7 @@ const session = require('express-session');
 const redis = require('connect-redis');
 const RedisStore = redis(session);
 const path = require('path');
-
+const bodyParser = require('body-parser');
 const app = express();
 
 app.use(session({
@@ -14,12 +14,23 @@ app.use(session({
   }),
   secret: 'keyboard cat'
 }));
+
+app.use(bodyParser.json({
+  type: 'application/json',
+}));
+
+
 app.use(express.static('dist'));
 
 app.use('/api/user', require('./routes/user'));
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../prod_index.html'));
+  console.log("resolving html")
+  require('fs').readFile(path.join(__dirname, '../prod_index.html'), (err, file) => {
+    res.send(file.toString().replace("initData", JSON.stringify({logined: !!req.session.UID})));
+  })
+
+
 });
 
 app.listen(process.env.PORT || 5001);

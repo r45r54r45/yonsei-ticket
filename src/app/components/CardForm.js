@@ -8,6 +8,7 @@ import Snackbar from 'material-ui/Snackbar';
 import {Card, CardHeader, CardActions} from 'material-ui/Card';
 import FlatButton from 'material-ui/FlatButton'
 import Dialog from 'material-ui/Dialog';
+import {postWithAuth, getWithAuth, deleteWithAuth} from '../utils/request';
 const style = {
   newCard: {
     wrapper: {
@@ -42,6 +43,11 @@ class CardForm extends Component {
         birth: '',
         cardNum: ''
       },
+      prevCardInfo: {
+        PAYMENT_METHOD_UID: null,
+        cardName: null,
+        createdTime: null
+      },
       error: {
         expiry: false,
         cardNum: false
@@ -51,7 +57,8 @@ class CardForm extends Component {
       submitting: false,
       deleteSuccess: false,
       noCard: false,
-      deleteCardDialog: false
+      deleteCardDialog: false,
+      loaded: false
     }
     this.onTabChange = this.onTabChange.bind(this);
     this.onPasswordChange = this.onPasswordChange.bind(this);
@@ -65,100 +72,107 @@ class CardForm extends Component {
     this.deleteCardRequest = this.deleteCardRequest.bind(this);
     this.closeCardDeleteSuccessSnackBar = this.closeCardDeleteSuccessSnackBar.bind(this);
   }
-
-  closeCardDeleteSuccessSnackBar() {
-    this.setState({
-      deleteSuccess: false
-    })
+  componentDidMount(){
+    getWithAuth('/payment')
+      .then(result => {
+        if(result.length !== 0){
+          this.setState(Object.assign(this.state, {
+            prevCardInfo: {
+              PAYMENT_METHOD_UID: result[0].PAYMENT_METHOD_UID,
+              cardName: result[0].PAYMENT_METHOD_INFO,
+              createdTime: result[0].CREATED_AT
+            },
+            loaded: true,
+            selected: 'registered card',
+          }))
+        }else{
+          this.setState(Object.assign(this.state, {
+            loaded: true,
+            selected: 'new card',
+          }))
+        }
+      })
   }
-  deleteCardRequest(){
-    this.setState({
-      deleteCardDialog:true
-    })
-  }
-  deleteCard() {
-    this.setState({
-      deleteSuccess: true,
-      selected: 'new card',
-      deleteCardDialog:false
-    })
-  }
-
   render() {
     return (
       <div>
-        <Paper
-          zDepth={1}
-        >
-          <Tabs
-            value={this.state.selected}
-            onChange={this.onTabChange}
+        {!this.state.loaded && (
+          <CircularProgress/>
+        )}
+        {this.state.loaded && (
+          <Paper
+            zDepth={1}
           >
-            <Tab label="Registered Card" value="registered card">
-              <Card>
-                <CardHeader
-                  title="하나카드 (0421)"
-                  subtitle="등록일: 2017-03-23"
-                />
-                <CardActions>
-                  <FlatButton label="Delete" onTouchTap={this.deleteCardRequest}/>
-                </CardActions>
-              </Card>
-            </Tab>
+            <Tabs
+              value={this.state.selected}
+              onChange={this.onTabChange}
+            >
+              <Tab label="Registered Card" value="registered card">
+                <Card>SERVER
+                  <CardHeader
+                    title={this.state.prevCardInfo.cardName}
+                    subtitle={"ADDED DATE: "+ new Date(this.state.prevCardInfo.createdTime).toLocaleString()}
+                  />
+                  <CardActions>
+                    <FlatButton label="Delete" onTouchTap={this.deleteCardRequest}/>
+                  </CardActions>
+                </Card>
+              </Tab>
 
-            <Tab label="New Card" value="new card">
-              <div style={style.newCard.wrapper}>
-                <abbr className="lead" style={style.newCard.direction}>
-                  During registration process, 1,000 won will be charged to your card and will be immediately cancelled
-                  after verification process. So don't be surprised.
-                </abbr>
-                <TextField
-                  ref={ref => this.cardNum = ref}
-                  fullWidth={true}
-                  hintText="Hint Text"
-                  floatingLabelText="Card Number"
-                  onChange={this.onCardNumChange}
-                  value={this.state.newCardInfo.cardNum}
-                  errorText={this.state.error.cardNum}
-                  disabled={this.state.submitting}
-                />
-                <TextField
-                  ref={ref => this.birth = ref}
-                  hintText="941009"
-                  maxLength="6"
-                  floatingLabelText="Date of Birth"
-                  onChange={this.onBirthChange}
-                  value={this.state.newCardInfo.birth}
-                  disabled={this.state.submitting}
-                />
-                <TextField
-                  ref={ref => this.expiry = ref}
-                  hintText="YYYY/MM"
-                  floatingLabelText="Expiry Date"
-                  onChange={this.onDateChange}
-                  value={this.state.newCardInfo.expiry}
-                  errorText={this.state.error.expiry}
-                  disabled={this.state.submitting}
-                />
-                <TextField
-                  ref={ref => this.password = ref}
-                  type="password"
-                  hintText="**"
-                  floatingLabelText="First 2 digits of password"
-                  onChange={this.onPasswordChange}
-                  value={this.state.newCardInfo.password}
-                  disabled={this.state.submitting}
-                />
-              </div>
-              <div style={style.buttonWrapper}>
-                <RaisedButton disabled={this.state.submitting} onClick={this.onSubmit}
-                              label={this.state.submitting ?
-                                <CircularProgress style={style.loading} size={.3} thickness={8}/> : "ADD CARD"}
-                              fullWidth={true} primary={true}/>
-              </div>
-            </Tab>
-          </Tabs>
-        </Paper>
+              <Tab label="New Card" value="new card">
+                <div style={style.newCard.wrapper}>
+                  <abbr className="lead" style={style.newCard.direction}>
+                    During registration process, 1,000 won will be charged to your card and will be immediately cancelled
+                    after verification process. So don't be surprised.
+                  </abbr>
+                  <TextField
+                    ref={ref => this.cardNum = ref}
+                    fullWidth={true}
+                    hintText="Hint Text"
+                    floatingLabelText="Card Number"
+                    onChange={this.onCardNumChange}
+                    value={this.state.newCardInfo.cardNum}
+                    errorText={this.state.error.cardNum}
+                    disabled={this.state.submitting}
+                  />
+                  <TextField
+                    ref={ref => this.birth = ref}
+                    hintText="941009"
+                    maxLength="6"
+                    floatingLabelText="Date of Birth"
+                    onChange={this.onBirthChange}
+                    value={this.state.newCardInfo.birth}
+                    disabled={this.state.submitting}
+                  />
+                  <TextField
+                    ref={ref => this.expiry = ref}
+                    hintText="YYYY/MM"
+                    floatingLabelText="Expiry Date"
+                    onChange={this.onDateChange}
+                    value={this.state.newCardInfo.expiry}
+                    errorText={this.state.error.expiry}
+                    disabled={this.state.submitting}
+                  />
+                  <TextField
+                    ref={ref => this.password = ref}
+                    type="password"
+                    hintText="**"
+                    floatingLabelText="First 2 digits of password"
+                    onChange={this.onPasswordChange}
+                    value={this.state.newCardInfo.password}
+                    disabled={this.state.submitting}
+                  />
+                </div>
+                <div style={style.buttonWrapper}>
+                  <RaisedButton disabled={this.state.submitting} onClick={this.onSubmit}
+                                label={this.state.submitting ?
+                                  <CircularProgress style={style.loading} size={.3}/> : "ADD CARD"}
+                                fullWidth={true} primary={true}/>
+                </div>
+              </Tab>
+            </Tabs>
+          </Paper>
+        )}
         <Snackbar
           open={this.state.success}
           message="Card has been successfully added"
@@ -243,8 +257,15 @@ class CardForm extends Component {
       this.setState({
         submitting: true
       })
-      toServer()
-        .then(() => {
+      // cardNum, cardDate, birth, cardPw
+      postWithAuth('/payment',{
+        cardNum: cardNum,
+        cardDate: expiry,
+        birth: birth,
+        cardPw: password
+      })
+        .then(result=>{
+          console.log(result);
           this.setState({
             success: true,
             selected: 'registered card',
@@ -253,6 +274,11 @@ class CardForm extends Component {
               expiry: '',
               birth: '',
               cardNum: ''
+            },
+            prevCardInfo: {
+              PAYMENT_METHOD_UID: result.inserted.insertId,
+              cardName: result.cardName,
+              createdTime: result.createdTime
             },
             error: {
               expiry: false,
@@ -271,9 +297,7 @@ class CardForm extends Component {
 
   onCardNumChange(e) {
     const value = e.target.value;
-    if (!parseInt(e.target.value) && e.target.value !== '') {
-      return;
-    }
+
     function cc_format(value) {
       var v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
       var matches = v.match(/\d{4,16}/g);
@@ -337,9 +361,7 @@ class CardForm extends Component {
 
   onBirthChange(e) {
     const value = e.target.value;
-    if (!parseInt(e.target.value) && e.target.value !== '') {
-      return;
-    }
+
     if (value.length < 7) {
       this.setState({
         newCardInfo: Object.assign(this.state.newCardInfo, {
@@ -354,23 +376,30 @@ class CardForm extends Component {
 
   onTabChange(v) {
     if (["registered card", "new card"].indexOf(v) !== -1) {
-      if (v === "registred card") {
-        //TODO no card
-        this.setState({
-          noCard: true
-        })
+      if (v === "registered card") {
+        if(!this.state.prevCardInfo.PAYMENT_METHOD_UID){
+          this.setState({
+            noCard: true
+          })
+        }else{
+          this.setState({
+            selected: v
+          })
+        }
       } else {
-        this.setState({
-          selected: v
-        })
+        if(this.state.prevCardInfo.PAYMENT_METHOD_UID){
+          alert('You must delete your previous card first');
+        }else{
+          this.setState({
+            selected: v
+          })
+        }
       }
     }
   }
 
   onPasswordChange(e) {
-    if (!parseInt(e.target.value) && e.target.value !== '') {
-      return;
-    }
+
     if (e.target.value.length < 3) {
       this.setState({
         newCardInfo: Object.assign(this.state.newCardInfo, {
@@ -381,9 +410,7 @@ class CardForm extends Component {
   }
 
   onDateChange(e) {
-    if (!parseInt(e.target.value) && e.target.value !== '') {
-      return;
-    }
+
     const value = e.target.value;
     if (this.state.newCardInfo.expiry === value + '/') {
       this.setState({
@@ -447,6 +474,31 @@ class CardForm extends Component {
         }
       }
     }
+  }
+  closeCardDeleteSuccessSnackBar() {
+    this.setState({
+      deleteSuccess: false
+    })
+  }
+  deleteCardRequest(){
+    this.setState({
+      deleteCardDialog:true
+    })
+  }
+  deleteCard() {
+    deleteWithAuth('/payment', {})
+      .then(result => {
+        this.setState({
+          prevCardInfo: {
+            PAYMENT_METHOD_UID: null,
+            cardName: null,
+            createdTime: null
+          },
+          deleteSuccess: true,
+          selected: 'new card',
+          deleteCardDialog:false
+        })
+      })
   }
 }
 
